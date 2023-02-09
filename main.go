@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Netflix/go-env"
+	"github.com/YusufOzmen01/veri-kontrol-backend/core/network"
+	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"math/rand"
 	"time"
-	"veri-kontrol-backend/core/network"
-	"veri-kontrol-backend/core/sources"
 )
 
 type Environment struct {
@@ -23,7 +23,6 @@ type Location struct {
 	Loc              []float64 `json:"loc"`
 	OriginalMessage  string    `json:"original_message"`
 	OriginalLocation string    `json:"original_location"`
-	epoch            int64     `json:"epoch"`
 }
 
 type LocationDB struct {
@@ -209,5 +208,7 @@ func main() {
 		return c.SendString("Added!")
 	})
 
-	app.Listen(":3000")
+	if err := app.Listen(":3000"); err != nil {
+		panic(err)
+	}
 }

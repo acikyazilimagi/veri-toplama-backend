@@ -1,4 +1,4 @@
-module veri-kontrol-backend
+module github.com/YusufOzmen01/veri-kontrol-backend
 
 go 1.19
 
