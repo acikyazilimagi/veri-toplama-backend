@@ -61,8 +61,14 @@ func main() {
 				OriginalAddress:  rec[1],
 				CorrectedAddress: rec[2],
 				Reason:           rec[3],
-				OpenAddress:      rec[4],
-				Apartment:        rec[5],
+			}
+
+			if len(rec) > 4 {
+				data.OpenAddress = rec[4]
+			}
+
+			if len(rec) > 5 {
+				data.Apartment = rec[5]
 			}
 
 			if err := locationRepository.ResolveLocation(ctx, data); err != nil {
