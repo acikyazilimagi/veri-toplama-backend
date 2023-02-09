@@ -56,7 +56,10 @@ func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
 }
 
 func (r *repository) ResolveLocation(ctx context.Context, location *LocationDB) error {
-	if err := r.mongo.InsertOne(ctx, "locations", location); err != nil {
+	if err := r.mongo.UpsertOne(ctx, "locations", bson.E{
+		Key:   "entry_id",
+		Value: location.EntryID,
+	}, location); err != nil {
 		logrus.Errorln(err)
 
 		return err
