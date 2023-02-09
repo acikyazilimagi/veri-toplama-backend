@@ -2,40 +2,19 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/Netflix/go-env"
-	"github.com/YusufOzmen01/veri-kontrol-backend/core/network"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
+	"github.com/YusufOzmen01/veri-kontrol-backend/repository"
+	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson"
 	"math/rand"
 	"time"
 )
 
 type Environment struct {
 	MongoUri string `env:"mongo_uri"`
-}
-
-type Location struct {
-	EntryID          int       `json:"entry_id"`
-	Loc              []float64 `json:"loc"`
-	OriginalMessage  string    `json:"original_message"`
-	OriginalLocation string    `json:"original_location"`
-}
-
-type LocationDB struct {
-	EntryID          int    `json:"entry_id" bson:"entry_id"`
-	Corrected        bool   `json:"corrected" bson:"corrected"`
-	OriginalAddress  string `json:"original_address" bson:"original_address"`
-	CorrectedAddress string `json:"corrected_address" bson:"corrected_address"`
-	Reason           string `json:"reason" bson:"reason"`
-}
-
-type SingleResponse struct {
-	FullText         string `json:"full_text"`
-	FormattedAddress string `json:"formatted_address"`
 }
 
 var cities = map[int][]float64{
@@ -60,45 +39,29 @@ func main() {
 	}
 
 	mongoClient := sources.NewMongoClient(ctx, environment.MongoUri, "database")
+	locationRepository := repository.NewRepository(mongoClient)
 
 	app.Get("/get-location", func(c *fiber.Ctx) error {
-		locations := make([]*Location, 0)
+		locations := make([]*repository.Location, 0)
 
 		data, exists := cache.Get("locations")
 		if !exists {
-			var d struct {
-				Locations []*Location `json:"results"`
-			}
-
-			res, _, err := network.ProcessGet(ctx, "https://apigo.afetharita.com/feeds/areas?ne_lat=39.91618777305531&ne_lng=47.85149904303703&sw_lat=36.07272886939253&sw_lng=23.872389299415502", nil)
+			lcs, err := tools.GetAllLocations(ctx)
 			if err != nil {
 				logrus.Errorln(err)
 
 				return c.SendString(err.Error())
 			}
 
-			if err := json.Unmarshal(res, &d); err != nil {
-				logrus.Errorln(err)
-
-				return c.SendString(err.Error())
-			}
-
-			locations = d.Locations
+			locations = lcs
 
 			cache.SetWithTTL("locations", locations, int64(time.Minute*15), 0)
 		} else {
-			locations = data.([]*Location)
+			locations = data.([]*repository.Location)
 		}
 
-		cur, err := mongoClient.Find(ctx, "locations", bson.E{})
+		locs, err := locationRepository.GetLocations(ctx)
 		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		locs := make([]*LocationDB, 0)
-		if err := cur.All(ctx, &locs); err != nil {
 			logrus.Errorln(err)
 
 			return c.SendString(err.Error())
@@ -118,7 +81,7 @@ func main() {
 		if cityID > 0 {
 			box := cities[cityID]
 
-			filteredLocations := make([]*Location, 0)
+			filteredLocations := make([]*repository.Location, 0)
 
 			for _, loc := range locations {
 				if box[0] >= loc.Loc[0] && box[1] >= loc.Loc[1] && box[2] <= loc.Loc[0] && box[3] <= loc.Loc[1] {
@@ -132,26 +95,19 @@ func main() {
 		randIndex := rand.Intn(len(locations))
 		selected := locations[randIndex]
 
-		resp, _, err := network.ProcessGet(ctx, fmt.Sprintf("https://apigo.afetharita.com/feeds/%d", selected.EntryID), nil)
+		singleData, err := tools.GetSingleLocation(ctx, selected.EntryID)
 		if err != nil {
 			logrus.Errorln(err)
 
 			return c.SendString(err.Error())
 		}
 
-		singleData := &SingleResponse{}
-		if err := json.Unmarshal(resp, singleData); err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
 		selected.OriginalMessage = singleData.FullText
-		selected.OriginalLocation = singleData.FormattedAddress
+		selected.OriginalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", selected.Loc[0], selected.Loc[1], selected.Loc[0], selected.Loc[1])
 
 		return c.JSON(struct {
 			Count    int
-			Location *Location
+			Location *repository.Location
 		}{
 			Count:    len(locations),
 			Location: selected,
@@ -161,26 +117,25 @@ func main() {
 	app.Get("/resolve", func(c *fiber.Ctx) error {
 		id := c.QueryInt("id")
 		newAddress := c.Query("new_address")
+		openAddress := c.Query("open_address")
+		apartment := c.Query("apartment")
 		reason := c.Query("reason")
 
-		resp, _, err := network.ProcessGet(ctx, fmt.Sprintf("https://apigo.afetharita.com/feeds/%d", id), nil)
+		locations, err := tools.GetAllLocations(ctx)
 		if err != nil {
 			logrus.Errorln(err)
 
 			return c.SendString(err.Error())
 		}
 
-		singleData := &SingleResponse{}
-		if err := json.Unmarshal(resp, singleData); err != nil {
+		singleData, err := tools.GetSingleLocation(ctx, id)
+		if err != nil {
 			logrus.Errorln(err)
 
 			return c.SendString(err.Error())
 		}
 
-		exists, err := mongoClient.DoesExist(ctx, "locations", bson.D{bson.E{
-			Key:   "entry_id",
-			Value: id,
-		}})
+		exists, err := locationRepository.IsResolved(ctx, id)
 		if err != nil {
 			logrus.Errorln(err)
 
@@ -191,15 +146,23 @@ func main() {
 			return c.SendString("this location is already checked")
 		}
 
-		data := &LocationDB{
-			EntryID:          id,
-			Corrected:        newAddress == singleData.FullText,
-			OriginalAddress:  singleData.FormattedAddress,
-			CorrectedAddress: newAddress,
-			Reason:           reason,
+		originalLocation := ""
+
+		for _, loc := range locations {
+			if loc.EntryID == id {
+				originalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", loc.Loc[0], loc.Loc[1], loc.Loc[0], loc.Loc[1])
+			}
 		}
 
-		if err := mongoClient.InsertOne(ctx, "locations", data); err != nil {
+		if err := locationRepository.ResolveLocation(ctx, &repository.LocationDB{
+			EntryID:          id,
+			Corrected:        newAddress == singleData.FullText,
+			OriginalAddress:  originalLocation,
+			CorrectedAddress: newAddress,
+			Reason:           reason,
+			OpenAddress:      openAddress,
+			Apartment:        apartment,
+		}); err != nil {
 			logrus.Errorln(err)
 
 			return c.SendString(err.Error())
