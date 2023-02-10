@@ -156,13 +156,6 @@ func main() {
 			return c.SendString(err.Error())
 		}
 
-		singleData, err := tools.GetSingleLocation(ctx, body.ID)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
 		originalLocation := ""
 		location := make([]float64, 0)
 
@@ -177,7 +170,7 @@ func main() {
 			EntryID:          body.ID,
 			Type:             body.LocationType,
 			Location:         location,
-			Corrected:        body.NewAddress == singleData.FullText,
+			Corrected:        body.NewAddress != originalLocation,
 			OriginalAddress:  originalLocation,
 			CorrectedAddress: body.NewAddress,
 			Reason:           body.Reason,
