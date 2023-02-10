@@ -31,13 +31,14 @@ type Location struct {
 }
 
 type LocationDB struct {
-	EntryID          int    `json:"entry_id" bson:"entry_id"`
-	Corrected        bool   `json:"corrected" bson:"corrected"`
-	OriginalAddress  string `json:"original_address" bson:"original_address"`
-	CorrectedAddress string `json:"corrected_address" bson:"corrected_address"`
-	OpenAddress      string `json:"open_address" bson:"open_address"`
-	Apartment        string `json:"apartment" bson:"apartment"`
-	Reason           string `json:"reason" bson:"reason"`
+	EntryID          int       `json:"entry_id" bson:"entry_id"`
+	Location         []float64 `json:"location" bson:"location"`
+	Corrected        bool      `json:"corrected" bson:"corrected"`
+	OriginalAddress  string    `json:"original_address" bson:"original_address"`
+	CorrectedAddress string    `json:"corrected_address" bson:"corrected_address"`
+	OpenAddress      string    `json:"open_address" bson:"open_address"`
+	Apartment        string    `json:"apartment" bson:"apartment"`
+	Reason           string    `json:"reason" bson:"reason"`
 }
 
 func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
