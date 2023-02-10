@@ -10,6 +10,7 @@ import (
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
@@ -53,6 +54,7 @@ func main() {
 	locationRepository := repository.NewRepository(mongoClient)
 
 	app.Use(cors.New())
+	app.Get("/monitor", monitor.New())
 
 	app.Get("/get-location", func(c *fiber.Ctx) error {
 		locations := make([]*repository.Location, 0)
