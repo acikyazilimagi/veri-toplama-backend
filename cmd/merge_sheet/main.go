@@ -7,6 +7,7 @@ import (
 	"github.com/Netflix/go-env"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
+	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
@@ -33,6 +34,11 @@ func main() {
 		panic(err)
 	}
 
+	locs, err := tools.GetAllLocations(context.Background(), sources.NewCache(1<<30, 1e7, 64))
+	if err != nil {
+		panic(err)
+	}
+
 	for _, file := range files {
 		log.Infof("Starting merging of file %s", file.Name())
 
@@ -55,9 +61,18 @@ func main() {
 
 			id, _ := strconv.ParseInt(rec[0], 10, 32)
 
+			location := make([]float64, 0)
+
+			for _, loc := range locs {
+				if loc.EntryID == int(id) {
+					location = loc.Loc
+				}
+			}
+
 			data := &locations.LocationDB{
 				EntryID:          int(id),
-				Corrected:        true,
+				Corrected:        len(rec[3]) > 0,
+				Location:         location,
 				OriginalAddress:  rec[1],
 				CorrectedAddress: rec[2],
 				Reason:           rec[3],
