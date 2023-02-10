@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/sirupsen/logrus"
@@ -9,6 +10,8 @@ import (
 )
 
 type Repository interface {
+	GetUser(ctx context.Context, authKey string) (*User, error)
+	AddUser(ctx context.Context, name, discord string, permLevel int) (string, error)
 }
 
 type repository struct {
@@ -22,9 +25,8 @@ func NewRepository(mongo sources.MongoClient) Repository {
 }
 
 const (
-	PermSubmit   = 1
-	PermValidate = 2
-	PermAdmin    = 999
+	PermSubmit    = 1
+	PermModerator = 2
 )
 
 type User struct {
@@ -35,18 +37,26 @@ type User struct {
 }
 
 func (r *repository) GetUser(ctx context.Context, authKey string) (*User, error) {
-	cur := r.mongo.FindOne(ctx, "users", bson.E{
-		Key:   "auth_key_hash",
-		Value: tools.Hash(authKey),
-	})
+	cur, err := r.mongo.Find(ctx, "users", bson.D{})
+	if err != nil {
+		return nil, err
+	}
 
-	user := &User{}
-	if err := cur.Decode(user); err != nil {
+	// Saçma bir yöntem farkındayım ama filtreler çalışmadığından böyle yapmak zorunda kaldım
+
+	user := make([]*User, 0)
+	if err := cur.All(ctx, &user); err != nil {
 		logrus.Errorln(err)
 		return nil, err
 	}
 
-	return user, nil
+	for _, u := range user {
+		if u.AuthKeyHash == tools.Hash(authKey) {
+			return u, nil
+		}
+	}
+
+	return nil, fmt.Errorf("user not found")
 }
 
 func (r *repository) AddUser(ctx context.Context, name, discord string, permLevel int) (string, error) {

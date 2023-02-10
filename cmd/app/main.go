@@ -7,6 +7,7 @@ import (
 	"github.com/Netflix/go-env"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	locationsRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
+	usersRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/users"
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -52,27 +53,39 @@ func main() {
 
 	mongoClient := sources.NewMongoClient(ctx, environment.MongoUri, "database")
 	locationRepository := locationsRepository.NewRepository(mongoClient)
+	userRepository := usersRepository.NewRepository(mongoClient)
+
+	admin := NewAdmin(locationRepository, cache)
 
 	app.Use(cors.New())
+
+	entries := app.Group("/entries", func(c *fiber.Ctx) error {
+		authKey := c.Get("Auth-Key")
+
+		user, err := userRepository.GetUser(ctx, authKey)
+		if err != nil {
+			return c.Status(401).SendString("User not found.")
+		}
+
+		if user.PermLevel < usersRepository.PermModerator {
+			return c.Status(401).SendString("You are not allowed to access here.")
+		}
+
+		return c.Next()
+	})
+
+	entries.Get("", admin.GetLocationEntries)
+	entries.Get("/:entry_id", admin.GetSingleEntry)
+	entries.Post("/:entry_id", admin.UpdateEntry)
+
 	app.Get("/monitor", monitor.New())
 
 	app.Get("/get-location", func(c *fiber.Ctx) error {
-		locations := make([]*locationsRepository.Location, 0)
+		locations, err := tools.GetAllLocations(ctx, cache)
+		if err != nil {
+			logrus.Errorln(err)
 
-		data, exists := cache.Get("locations")
-		if !exists {
-			lcs, err := tools.GetAllLocations(ctx)
-			if err != nil {
-				logrus.Errorln(err)
-
-				return c.SendString(err.Error())
-			}
-
-			locations = lcs
-
-			cache.SetWithTTL("locations", locations, int64(time.Minute*15), 0)
-		} else {
-			locations = data.([]*locationsRepository.Location)
+			return c.SendString(err.Error())
 		}
 
 		locs, err := locationRepository.GetLocations(ctx)
@@ -149,7 +162,7 @@ func main() {
 			return c.SendString("this location is already checked")
 		}
 
-		locations, err := tools.GetAllLocations(ctx)
+		locations, err := tools.GetAllLocations(ctx, cache)
 		if err != nil {
 			logrus.Errorln(err)
 
@@ -170,7 +183,7 @@ func main() {
 			EntryID:          body.ID,
 			Type:             body.LocationType,
 			Location:         location,
-			Corrected:        body.NewAddress != originalLocation,
+			Corrected:        len(body.Reason) > 0,
 			OriginalAddress:  originalLocation,
 			CorrectedAddress: body.NewAddress,
 			Reason:           body.Reason,

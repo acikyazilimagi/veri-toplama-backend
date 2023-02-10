@@ -5,11 +5,14 @@ import (
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Repository interface {
 	GetLocations(ctx context.Context) ([]*LocationDB, error)
+
 	ResolveLocation(ctx context.Context, location *LocationDB) error
+
 	IsResolved(ctx context.Context, locationID int) (bool, error)
 }
 
@@ -64,7 +67,13 @@ func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
 }
 
 func (r *repository) ResolveLocation(ctx context.Context, location *LocationDB) error {
-	if err := r.mongo.InsertOne(ctx, "locations", location); err != nil {
+	if err := r.mongo.UpdateOne(ctx, "locations", bson.E{
+		Key:   "entry_id",
+		Value: location.EntryID,
+	}, bson.E{
+		Key:   "$set",
+		Value: location,
+	}, options.Update().SetUpsert(true)); err != nil {
 		logrus.Errorln(err)
 
 		return err
