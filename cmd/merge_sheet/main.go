@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/Netflix/go-env"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	"github.com/YusufOzmen01/veri-kontrol-backend/repository"
+	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
@@ -26,7 +26,7 @@ func main() {
 
 	mongoClient := sources.NewMongoClient(ctx, environment.MongoUri, "database")
 
-	locationRepository := repository.NewRepository(mongoClient)
+	locationRepository := locations.NewRepository(mongoClient)
 
 	files, err := os.ReadDir("merge_data")
 	if err != nil {
@@ -55,7 +55,7 @@ func main() {
 
 			id, _ := strconv.ParseInt(rec[0], 10, 32)
 
-			data := &repository.LocationDB{
+			data := &locations.LocationDB{
 				EntryID:          int(id),
 				Corrected:        true,
 				OriginalAddress:  rec[1],

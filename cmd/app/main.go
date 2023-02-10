@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/Netflix/go-env"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	"github.com/YusufOzmen01/veri-kontrol-backend/repository"
+	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -51,13 +51,13 @@ func main() {
 	}
 
 	mongoClient := sources.NewMongoClient(ctx, environment.MongoUri, "database")
-	locationRepository := repository.NewRepository(mongoClient)
+	locationRepository := locations.NewRepository(mongoClient)
 
 	app.Use(cors.New())
 	app.Get("/monitor", monitor.New())
 
 	app.Get("/get-location", func(c *fiber.Ctx) error {
-		locations := make([]*repository.Location, 0)
+		locations := make([]*locations.Location, 0)
 
 		data, exists := cache.Get("locations")
 		if !exists {
@@ -72,7 +72,7 @@ func main() {
 
 			cache.SetWithTTL("locations", locations, int64(time.Minute*15), 0)
 		} else {
-			locations = data.([]*repository.Location)
+			locations = data.([]*locations.Location)
 		}
 
 		locs, err := locationRepository.GetLocations(ctx)
@@ -96,7 +96,7 @@ func main() {
 		if cityID > 0 {
 			box := cities[cityID]
 
-			filteredLocations := make([]*repository.Location, 0)
+			filteredLocations := make([]*locations.Location, 0)
 
 			for _, loc := range locations {
 				if box[0] >= loc.Loc[0] && box[1] >= loc.Loc[1] && box[2] <= loc.Loc[0] && box[3] <= loc.Loc[1] {
@@ -121,8 +121,8 @@ func main() {
 		selected.OriginalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", selected.Loc[0], selected.Loc[1], selected.Loc[0], selected.Loc[1])
 
 		return c.JSON(struct {
-			Count    int                  `json:"count"`
-			Location *repository.Location `json:"location"`
+			Count    int                 `json:"count"`
+			Location *locations.Location `json:"location"`
 		}{
 			Count:    len(locations),
 			Location: selected,
@@ -166,7 +166,7 @@ func main() {
 			}
 		}
 
-		if err := locationRepository.ResolveLocation(ctx, &repository.LocationDB{
+		if err := locationRepository.ResolveLocation(ctx, &locations.LocationDB{
 			EntryID:          body.ID,
 			Type:             body.LocationType,
 			Location:         location,

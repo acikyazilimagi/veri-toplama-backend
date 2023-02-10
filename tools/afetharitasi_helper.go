@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/network"
-	"github.com/YusufOzmen01/veri-kontrol-backend/repository"
+	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 )
 
 type SingleResponse struct {
@@ -13,9 +13,9 @@ type SingleResponse struct {
 	FormattedAddress string `json:"formatted_address"`
 }
 
-func GetAllLocations(ctx context.Context) ([]*repository.Location, error) {
+func GetAllLocations(ctx context.Context) ([]*locations.Location, error) {
 	var d struct {
-		Locations []*repository.Location `json:"results"`
+		Locations []*locations.Location `json:"results"`
 	}
 
 	res, _, err := network.ProcessGet(ctx, "https://apigo.afetharita.com/feeds/areas?ne_lat=39.91618777305531&ne_lng=47.85149904303703&sw_lat=36.07272886939253&sw_lng=23.872389299415502", nil)
