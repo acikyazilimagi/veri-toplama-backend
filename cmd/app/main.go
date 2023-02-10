@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/Netflix/go-env"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
@@ -25,6 +26,15 @@ var cities = map[int][]float64{
 	4: {36.50903585150776, 36.402143998719424, 36.47976138594277, 36.31474829364722},
 	5: {36.64234742932176, 36.3232450328562, 36.53629731173617, 36.029282092441115},
 	6: {36.116001873480265, 36.06470054394251, 36.0627178139989, 35.91771907373497},
+}
+
+type ResolveBody struct {
+	ID           int    `json:"id"`
+	LocationType int    `json:"type"`
+	NewAddress   string `json:"new_address"`
+	OpenAddress  string `json:"open_address"`
+	Apartment    string `json:"apartment"`
+	Reason       string `json:"reason"`
 }
 
 func main() {
@@ -117,16 +127,16 @@ func main() {
 		})
 	})
 
-	app.Get("/resolve", func(c *fiber.Ctx) error {
-		id := c.QueryInt("id")
-		locationType := c.QueryInt("type")
+	app.Post("/resolve", func(c *fiber.Ctx) error {
+		body := &ResolveBody{}
 
-		newAddress := c.Query("new_address")
-		openAddress := c.Query("open_address")
-		apartment := c.Query("apartment")
-		reason := c.Query("reason")
+		if err := json.Unmarshal(c.Body(), body); err != nil {
+			logrus.Errorln(err)
 
-		exists, err := locationRepository.IsResolved(ctx, id)
+			return c.SendString(err.Error())
+		}
+
+		exists, err := locationRepository.IsResolved(ctx, body.ID)
 		if err != nil {
 			logrus.Errorln(err)
 
@@ -144,7 +154,7 @@ func main() {
 			return c.SendString(err.Error())
 		}
 
-		singleData, err := tools.GetSingleLocation(ctx, id)
+		singleData, err := tools.GetSingleLocation(ctx, body.ID)
 		if err != nil {
 			logrus.Errorln(err)
 
@@ -155,22 +165,22 @@ func main() {
 		location := make([]float64, 0)
 
 		for _, loc := range locations {
-			if loc.EntryID == id {
+			if loc.EntryID == body.ID {
 				originalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", loc.Loc[0], loc.Loc[1], loc.Loc[0], loc.Loc[1])
 				location = loc.Loc
 			}
 		}
 
 		if err := locationRepository.ResolveLocation(ctx, &repository.LocationDB{
-			EntryID:          id,
-			Type:             locationType,
+			EntryID:          body.ID,
+			Type:             body.LocationType,
 			Location:         location,
-			Corrected:        newAddress == singleData.FullText,
+			Corrected:        body.NewAddress == singleData.FullText,
 			OriginalAddress:  originalLocation,
-			CorrectedAddress: newAddress,
-			Reason:           reason,
-			OpenAddress:      openAddress,
-			Apartment:        apartment,
+			CorrectedAddress: body.NewAddress,
+			Reason:           body.Reason,
+			OpenAddress:      body.OpenAddress,
+			Apartment:        body.Apartment,
 		}); err != nil {
 			logrus.Errorln(err)
 
