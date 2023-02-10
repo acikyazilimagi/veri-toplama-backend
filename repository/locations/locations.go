@@ -66,10 +66,10 @@ func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
 }
 
 func (r *repository) ResolveLocation(ctx context.Context, location *LocationDB) error {
-	if err := r.mongo.DeleteOne(ctx, "locations", bson.E{
+	if err := r.mongo.DeleteOne(ctx, "locations", bson.D{{
 		Key:   "entry_id",
 		Value: location.EntryID,
-	}); err != nil {
+	}}); err != nil {
 		logrus.Errorln(err)
 
 		return err
