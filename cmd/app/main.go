@@ -121,6 +121,17 @@ func main() {
 		apartment := c.Query("apartment")
 		reason := c.Query("reason")
 
+		exists, err := locationRepository.IsResolved(ctx, id)
+		if err != nil {
+			logrus.Errorln(err)
+
+			return c.SendString(err.Error())
+		}
+
+		if exists {
+			return c.SendString("this location is already checked")
+		}
+
 		locations, err := tools.GetAllLocations(ctx)
 		if err != nil {
 			logrus.Errorln(err)
@@ -133,17 +144,6 @@ func main() {
 			logrus.Errorln(err)
 
 			return c.SendString(err.Error())
-		}
-
-		exists, err := locationRepository.IsResolved(ctx, id)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		if exists {
-			return c.SendString("this location is already checked")
 		}
 
 		originalLocation := ""
