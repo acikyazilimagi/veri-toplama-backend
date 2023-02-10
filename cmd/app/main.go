@@ -187,7 +187,7 @@ func main() {
 			EntryID:          body.ID,
 			Type:             body.LocationType,
 			Location:         location,
-			Corrected:        len(body.Reason) > 0,
+			Corrected:        body.Reason == "Hata Yok",
 			OriginalAddress:  originalLocation,
 			CorrectedAddress: body.NewAddress,
 			Reason:           body.Reason,

@@ -83,7 +83,7 @@ func (a *admin) UpdateEntry(c *fiber.Ctx) error {
 		EntryID:          body.ID,
 		Type:             body.LocationType,
 		Location:         location,
-		Corrected:        len(body.Reason) > 0,
+		Corrected:        body.Reason == "Hata Yok",
 		Verified:         true,
 		OriginalAddress:  originalLocation,
 		CorrectedAddress: body.NewAddress,
