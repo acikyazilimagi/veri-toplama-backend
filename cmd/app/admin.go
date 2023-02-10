@@ -84,6 +84,7 @@ func (a *admin) UpdateEntry(c *fiber.Ctx) error {
 		Type:             body.LocationType,
 		Location:         location,
 		Corrected:        len(body.Reason) > 0,
+		Verified:         true,
 		OriginalAddress:  originalLocation,
 		CorrectedAddress: body.NewAddress,
 		Reason:           body.Reason,
