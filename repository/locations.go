@@ -30,6 +30,11 @@ type Location struct {
 	OriginalLocation string    `json:"original_location"`
 }
 
+const (
+	TypeWreckage   = 1
+	TypeSupplyHelp = 2
+)
+
 type LocationDB struct {
 	EntryID          int       `json:"entry_id" bson:"entry_id"`
 	Location         []float64 `json:"location" bson:"location"`
@@ -38,6 +43,7 @@ type LocationDB struct {
 	CorrectedAddress string    `json:"corrected_address" bson:"corrected_address"`
 	OpenAddress      string    `json:"open_address" bson:"open_address"`
 	Apartment        string    `json:"apartment" bson:"apartment"`
+	Type             int       `json:"type" bson:"type"`
 	Reason           string    `json:"reason" bson:"reason"`
 }
 

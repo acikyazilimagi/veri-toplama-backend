@@ -119,6 +119,8 @@ func main() {
 
 	app.Get("/resolve", func(c *fiber.Ctx) error {
 		id := c.QueryInt("id")
+		locationType := c.QueryInt("type")
+
 		newAddress := c.Query("new_address")
 		openAddress := c.Query("open_address")
 		apartment := c.Query("apartment")
@@ -161,6 +163,7 @@ func main() {
 
 		if err := locationRepository.ResolveLocation(ctx, &repository.LocationDB{
 			EntryID:          id,
+			Type:             locationType,
 			Location:         location,
 			Corrected:        newAddress == singleData.FullText,
 			OriginalAddress:  originalLocation,
