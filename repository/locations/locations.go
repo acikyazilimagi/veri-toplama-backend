@@ -3,6 +3,7 @@ package locations
 import (
 	"context"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
+	"github.com/YusufOzmen01/veri-kontrol-backend/repository/users"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -46,7 +47,7 @@ type LocationDB struct {
 	ID               primitive.ObjectID `json:"_id" bson:"_id"`
 	EntryID          int                `json:"entry_id" bson:"entry_id"`
 	CreatedAt        time.Time          `json:"created_at" bson:"created_at"`
-	Sender           string             `json:"sender" bson:"sender"`
+	Sender           *users.User        `json:"sender" bson:"sender"`
 	Location         []float64          `json:"location" bson:"location"`
 	Corrected        bool               `json:"corrected" bson:"corrected"`
 	Verified         bool               `json:"verified" bson:"verified"`

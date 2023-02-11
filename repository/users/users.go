@@ -7,6 +7,7 @@ import (
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Repository interface {
@@ -30,10 +31,11 @@ const (
 )
 
 type User struct {
-	Name        string `json:"name" bson:"name"`
-	Discord     string `json:"discord" bson:"discord"`
-	AuthKeyHash uint32 `json:"auth_key_hash" bson:"auth_key_hash"`
-	PermLevel   int    `json:"perm_level" bson:"perm_level"`
+	ID          primitive.ObjectID `json:"_id" bson:"_id"`
+	Name        string             `json:"name" bson:"name"`
+	Discord     string             `json:"discord" bson:"discord"`
+	AuthKeyHash uint32             `json:"auth_key_hash" bson:"auth_key_hash"`
+	PermLevel   int                `json:"perm_level" bson:"perm_level"`
 }
 
 func (r *repository) GetUser(ctx context.Context, authKey string) (*User, error) {

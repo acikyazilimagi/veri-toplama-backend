@@ -248,6 +248,14 @@ func main() {
 			}
 		}
 
+		var sender *usersRepository.User
+
+		authKey := c.Get("Auth-Key")
+		userData, err := userRepository.GetUser(c.Context(), authKey)
+		if err == nil {
+			sender = userData
+		}
+
 		if err := locationRepository.ResolveLocation(ctx, &locationsRepository.LocationDB{
 			EntryID:          body.ID,
 			Type:             body.LocationType,
@@ -256,6 +264,7 @@ func main() {
 			OriginalAddress:  originalLocation,
 			CorrectedAddress: body.NewAddress,
 			Reason:           body.Reason,
+			Sender:           sender,
 			OpenAddress:      body.OpenAddress,
 			Apartment:        body.Apartment,
 			TweetContents:    body.TweetContents,
