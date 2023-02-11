@@ -64,7 +64,7 @@ func main() {
 
 	app.Use(cors.New())
 
-	entries := app.Group("/entries", func(c *fiber.Ctx) error {
+	adminG := app.Group("/admin", func(c *fiber.Ctx) error {
 		authKey := c.Get("Auth-Key")
 
 		user, err := userRepository.GetUser(ctx, authKey)
@@ -79,9 +79,11 @@ func main() {
 		return c.Next()
 	})
 
-	entries.Get("", admin.GetLocationEntries)
-	entries.Get("/:entry_id", admin.GetSingleEntry)
-	entries.Post("/:entry_id", admin.UpdateEntry)
+	entriesG := adminG.Group("/entries")
+
+	entriesG.Get("", admin.GetLocationEntries)
+	entriesG.Get("/:entry_id", admin.GetSingleEntry)
+	entriesG.Post("/:entry_id", admin.UpdateEntry)
 
 	app.Get("/monitor", monitor.New())
 
