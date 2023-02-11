@@ -125,6 +125,29 @@ func main() {
 			locations = filteredLocations
 		}
 
+		startingAt := c.QueryInt("starting_at")
+		if startingAt > 0 {
+			filteredLocations := make([]*locationsRepository.Location, 0)
+
+			for _, loc := range locations {
+				if loc.Epoch >= startingAt {
+					filteredLocations = append(filteredLocations, loc)
+				}
+			}
+
+			locations = filteredLocations
+		}
+
+		if len(locations) == 0 {
+			return c.JSON(struct {
+				Count    int                           `json:"count"`
+				Location *locationsRepository.Location `json:"location"`
+			}{
+				Count:    0,
+				Location: nil,
+			})
+		}
+
 		randIndex := rand.Intn(len(locations))
 		selected := locations[randIndex]
 

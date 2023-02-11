@@ -32,6 +32,7 @@ func NewRepository(mongo sources.MongoClient) Repository {
 type Location struct {
 	EntryID          int       `json:"entry_id"`
 	Loc              []float64 `json:"loc"`
+	Epoch            int       `json:"epoch"`
 	OriginalMessage  string    `json:"original_message"`
 	OriginalLocation string    `json:"original_location"`
 }
