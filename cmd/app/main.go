@@ -148,17 +148,56 @@ func main() {
 			})
 		}
 
-		randIndex := rand.Intn(len(locations))
-		selected := locations[randIndex]
+		var selected *locationsRepository.Location
+		fullText := ""
+		processed := make([]int, 0)
 
-		singleData, err := tools.GetSingleLocation(ctx, selected.EntryID)
-		if err != nil {
-			logrus.Errorln(err)
+		for {
+			randIndex := rand.Intn(len(locations))
 
-			return c.SendString(err.Error())
+			if len(processed) == len(locations) {
+				return c.JSON(struct {
+					Count    int                           `json:"count"`
+					Location *locationsRepository.Location `json:"location"`
+				}{
+					Count:    0,
+					Location: nil,
+				})
+			}
+
+			for _, i := range processed {
+				if randIndex == i {
+					continue
+				}
+			}
+
+			processed = append(processed, randIndex)
+
+			s := locations[randIndex]
+
+			singleData, err := tools.GetSingleLocation(ctx, s.EntryID)
+			if err != nil {
+				logrus.Errorln(err)
+
+				return c.SendString(err.Error())
+			}
+
+			exists, err := locationRepository.IsDuplicate(c.Context(), singleData.FullText)
+			if err != nil {
+				logrus.Errorln(err)
+
+				return c.SendString(err.Error())
+			}
+
+			if !exists {
+				selected = s
+				fullText = singleData.FullText
+
+				break
+			}
 		}
 
-		selected.OriginalMessage = singleData.FullText
+		selected.OriginalMessage = fullText
 		selected.OriginalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", selected.Loc[0], selected.Loc[1], selected.Loc[0], selected.Loc[1])
 
 		return c.JSON(struct {
