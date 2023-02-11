@@ -175,7 +175,7 @@ func main() {
 
 			s := locations[randIndex]
 
-			singleData, err := tools.GetSingleLocation(ctx, s.EntryID)
+			singleData, err := tools.GetSingleLocation(ctx, s.EntryID, cache)
 			if err != nil {
 				logrus.Errorln(err)
 
