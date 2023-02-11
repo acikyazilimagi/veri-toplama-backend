@@ -167,15 +167,16 @@ func main() {
 			return c.SendString("this location is already checked")
 		}
 
-		duplicate, err := locationRepository.IsDuplicate(ctx, body.TweetContents)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-		if duplicate {
-			return c.SendString("This tweet already exists")
-		}
+		// duplicate, err := locationRepository.IsDuplicate(ctx, body.TweetContents)
+		// if err != nil {
+		//	  logrus.Errorln(err)
+		//
+		//	return c.SendString(err.Error())
+		// }
+		//
+		// if duplicate {
+		// 	return c.SendString("This tweet already exists")
+		// }
 
 		locations, err := tools.GetAllLocations(ctx, cache)
 		if err != nil {
