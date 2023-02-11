@@ -25,7 +25,9 @@ func GetAllLocations(ctx context.Context, cache sources.Cache) ([]*locations.Loc
 		return data.([]*locations.Location), nil
 	}
 
-	res, _, err := network.ProcessGet(ctx, "https://apigo.afetharita.com/feeds/areas?ne_lat=39.91618777305531&ne_lng=47.85149904303703&sw_lat=36.07272886939253&sw_lng=23.872389299415502", nil)
+	res, _, err := network.ProcessGet(ctx, "https://apigo.afetharita.com/feeds/areas?ne_lat=39.91618777305531&ne_lng=47.85149904303703&sw_lat=36.07272886939253&sw_lng=23.872389299415502", map[string]string{
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +42,9 @@ func GetAllLocations(ctx context.Context, cache sources.Cache) ([]*locations.Loc
 }
 
 func GetSingleLocation(ctx context.Context, locationID int) (*SingleResponse, error) {
-	resp, _, err := network.ProcessGet(ctx, fmt.Sprintf("https://apigo.afetharita.com/feeds/%d", locationID), nil)
+	resp, _, err := network.ProcessGet(ctx, fmt.Sprintf("https://apigo.afetharita.com/feeds/%d", locationID), map[string]string{
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	})
 	if err != nil {
 		panic(err)
 	}
