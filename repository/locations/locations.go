@@ -15,6 +15,8 @@ type Repository interface {
 	IsResolved(ctx context.Context, locationID int) (bool, error)
 
 	IsDuplicate(ctx context.Context, tweetContents string) (bool, error)
+
+	UpdateTweetContents(ctx context.Context) ([]*LocationDB, error)
 }
 
 type repository struct {
@@ -109,4 +111,24 @@ func (r *repository) IsDuplicate(ctx context.Context, tweetContents string) (boo
 	}
 
 	return exists, nil
+}
+
+func (r *repository) UpdateTweetContents(ctx context.Context) ([]*LocationDB, error) {
+	// FOR OLD DB COLLECTIONS ONLY, update the tweet_contents for old tweet data where it does not exist, or is empty
+	// Do not use in app
+	cur, err := r.mongo.Find(ctx, "locations", bson.D{{
+		Key:   "tweet_contents",
+		Value: nil,
+	}})
+	if err != nil {
+		return nil, err
+	}
+
+	locs := make([]*LocationDB, 0)
+	if err := cur.All(ctx, &locs); err != nil {
+		logrus.Errorln(err)
+		return nil, err
+	}
+
+	return locs, nil
 }
