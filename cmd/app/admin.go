@@ -35,6 +35,10 @@ func (a *admin) GetLocationEntries(c *fiber.Ctx) error {
 		return c.SendString(err.Error())
 	}
 
+	for _, entry := range entries {
+		entry.CreatedAt = entry.ID.Timestamp()
+	}
+
 	return c.JSON(entries)
 }
 

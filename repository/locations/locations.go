@@ -5,6 +5,8 @@ import (
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
 
 type Repository interface {
@@ -40,17 +42,20 @@ const (
 )
 
 type LocationDB struct {
-	EntryID          int       `json:"entry_id" bson:"entry_id"`
-	Location         []float64 `json:"location" bson:"location"`
-	Corrected        bool      `json:"corrected" bson:"corrected"`
-	Verified         bool      `json:"verified" bson:"verified"`
-	OriginalAddress  string    `json:"original_address" bson:"original_address"`
-	CorrectedAddress string    `json:"corrected_address" bson:"corrected_address"`
-	OpenAddress      string    `json:"open_address" bson:"open_address"`
-	Apartment        string    `json:"apartment" bson:"apartment"`
-	Type             int       `json:"type" bson:"type"`
-	Reason           string    `json:"reason" bson:"reason"`
-	TweetContents    string    `json:"tweet_contents" bson:"tweet_contents"`
+	ID               primitive.ObjectID `json:"_id" bson:"_id"`
+	EntryID          int                `json:"entry_id" bson:"entry_id"`
+	CreatedAt        time.Time          `json:"created_at" bson:"created_at"`
+	Sender           string             `json:"sender" bson:"sender"`
+	Location         []float64          `json:"location" bson:"location"`
+	Corrected        bool               `json:"corrected" bson:"corrected"`
+	Verified         bool               `json:"verified" bson:"verified"`
+	OriginalAddress  string             `json:"original_address" bson:"original_address"`
+	CorrectedAddress string             `json:"corrected_address" bson:"corrected_address"`
+	OpenAddress      string             `json:"open_address" bson:"open_address"`
+	Apartment        string             `json:"apartment" bson:"apartment"`
+	Type             int                `json:"type" bson:"type"`
+	Reason           string             `json:"reason" bson:"reason"`
+	TweetContents    string             `json:"tweet_contents" bson:"tweet_contents"`
 }
 
 func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
