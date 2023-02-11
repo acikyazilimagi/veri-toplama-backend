@@ -41,7 +41,12 @@ func GetAllLocations(ctx context.Context, cache sources.Cache) ([]*locations.Loc
 	return d.Locations, nil
 }
 
-func GetSingleLocation(ctx context.Context, locationID int) (*SingleResponse, error) {
+func GetSingleLocation(ctx context.Context, locationID int, cache sources.Cache) (*SingleResponse, error) {
+	data, exists := cache.Get(fmt.Sprintf("single_location_%d", locationID))
+	if exists {
+		return data.(*SingleResponse), nil
+	}
+
 	resp, _, err := network.ProcessGet(ctx, fmt.Sprintf("https://apigo.afetharita.com/feeds/%d", locationID), map[string]string{
 		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
 	})
@@ -53,6 +58,8 @@ func GetSingleLocation(ctx context.Context, locationID int) (*SingleResponse, er
 	if err := json.Unmarshal(resp, singleData); err != nil {
 		panic(err)
 	}
+
+	cache.Set(fmt.Sprintf("single_location_%d", locationID), singleData, 0)
 
 	return singleData, nil
 }
