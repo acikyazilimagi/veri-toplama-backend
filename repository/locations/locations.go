@@ -13,6 +13,8 @@ type Repository interface {
 	ResolveLocation(ctx context.Context, location *LocationDB) error
 
 	IsResolved(ctx context.Context, locationID int) (bool, error)
+
+	IsDuplicate(ctx context.Context, tweetContents string) (bool, error)
 }
 
 type repository struct {
@@ -48,6 +50,7 @@ type LocationDB struct {
 	Apartment        string    `json:"apartment" bson:"apartment"`
 	Type             int       `json:"type" bson:"type"`
 	Reason           string    `json:"reason" bson:"reason"`
+	TweetContents    string    `json:"tweet_contents" bson:"tweet_contents"`
 }
 
 func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
@@ -88,6 +91,18 @@ func (r *repository) IsResolved(ctx context.Context, locationID int) (bool, erro
 	exists, err := r.mongo.DoesExist(ctx, "locations", bson.D{bson.E{
 		Key:   "entry_id",
 		Value: locationID,
+	}})
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (r *repository) IsDuplicate(ctx context.Context, tweetContents string) (bool, error) {
+	exists, err := r.mongo.DoesExist(ctx, "locations", bson.D{bson.E{
+		Key:   "tweet_contents",
+		Value: tweetContents,
 	}})
 	if err != nil {
 		return false, err

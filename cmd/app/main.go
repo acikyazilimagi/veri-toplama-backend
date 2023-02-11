@@ -35,12 +35,13 @@ var cities = map[int][]float64{
 }
 
 type ResolveBody struct {
-	ID           int    `json:"id"`
-	LocationType int    `json:"type"`
-	NewAddress   string `json:"new_address"`
-	OpenAddress  string `json:"open_address"`
-	Apartment    string `json:"apartment"`
-	Reason       string `json:"reason"`
+	ID            int    `json:"id"`
+	LocationType  int    `json:"type"`
+	NewAddress    string `json:"new_address"`
+	OpenAddress   string `json:"open_address"`
+	Apartment     string `json:"apartment"`
+	Reason        string `json:"reason"`
+	TweetContents string `json:"tweet_contents"`
 }
 
 func main() {
@@ -166,6 +167,16 @@ func main() {
 			return c.SendString("this location is already checked")
 		}
 
+		duplicate, err := locationRepository.IsDuplicate(ctx, body.TweetContents)
+		if err != nil {
+			logrus.Errorln(err)
+
+			return c.SendString(err.Error())
+		}
+		if duplicate {
+			return c.SendString("This tweet already exists")
+		}
+
 		locations, err := tools.GetAllLocations(ctx, cache)
 		if err != nil {
 			logrus.Errorln(err)
@@ -193,6 +204,7 @@ func main() {
 			Reason:           body.Reason,
 			OpenAddress:      body.OpenAddress,
 			Apartment:        body.Apartment,
+			TweetContents:    body.TweetContents,
 		}); err != nil {
 			logrus.Errorln(err)
 
@@ -202,7 +214,7 @@ func main() {
 		return c.SendString("Successfully added!")
 	})
 
-	if err := app.Listen(":80"); err != nil {
+	if err := app.Listen(":3781"); err != nil {
 		panic(err)
 	}
 }
