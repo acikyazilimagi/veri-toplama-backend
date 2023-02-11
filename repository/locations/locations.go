@@ -88,7 +88,7 @@ func (r *repository) ResolveLocation(ctx context.Context, location *LocationDB) 
 }
 
 func (r *repository) IsResolved(ctx context.Context, locationID int) (bool, error) {
-	exists, err := r.mongo.DoesExist(ctx, "locations", bson.D{bson.E{
+	exists, err := r.mongo.DoesExist(ctx, "locations", bson.D{{
 		Key:   "entry_id",
 		Value: locationID,
 	}})
@@ -100,7 +100,7 @@ func (r *repository) IsResolved(ctx context.Context, locationID int) (bool, erro
 }
 
 func (r *repository) IsDuplicate(ctx context.Context, tweetContents string) (bool, error) {
-	exists, err := r.mongo.DoesExist(ctx, "locations", bson.D{bson.E{
+	exists, err := r.mongo.DoesExist(ctx, "locations", bson.D{{
 		Key:   "tweet_contents",
 		Value: tweetContents,
 	}})
