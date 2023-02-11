@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
+	"github.com/YusufOzmen01/veri-kontrol-backend/util"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -53,7 +53,7 @@ func (r *repository) GetUser(ctx context.Context, authKey string) (*User, error)
 	}
 
 	for _, u := range user {
-		if u.AuthKeyHash == tools.Hash(authKey) {
+		if u.AuthKeyHash == util.Hash(authKey) {
 			return u, nil
 		}
 	}
@@ -62,12 +62,12 @@ func (r *repository) GetUser(ctx context.Context, authKey string) (*User, error)
 }
 
 func (r *repository) AddUser(ctx context.Context, name, discord string, permLevel int) (string, error) {
-	authKey := tools.RandomString(32)
+	authKey := util.RandomString(32)
 
 	if err := r.mongo.InsertOne(ctx, "users", &User{
 		Name:        name,
 		Discord:     discord,
-		AuthKeyHash: tools.Hash(authKey),
+		AuthKeyHash: util.Hash(authKey),
 		PermLevel:   permLevel,
 	}); err != nil {
 		logrus.Errorln(err)
