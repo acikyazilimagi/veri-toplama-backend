@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 )
@@ -59,6 +60,19 @@ func main() {
 
 	admin := NewAdmin(locationRepository, cache)
 
+	processedIDs := make([]int, 0)
+
+	logrus.Infoln("Pulling entries")
+	locs, err := locationRepository.GetLocations(ctx)
+	if err != nil {
+		logrus.Errorf("Couldn't get all locations: %s", err)
+	}
+
+	for _, loc := range locs {
+		processedIDs = append(processedIDs, loc.EntryID)
+	}
+	logrus.Infoln("Startup complete")
+
 	app.Use(cors.New())
 
 	adminG := app.Group("/admin", func(c *fiber.Ctx) error {
@@ -86,14 +100,16 @@ func main() {
 
 	app.Get("/get-location", handler.GetLocationHandler(ctx,
 		locationRepository,
-		cache))
+		cache,
+		processedIDs))
 
 	app.Post("/resolve", handler.ResolveValidationHandler(ctx,
 		locationRepository,
 		userRepository,
-		cache))
+		cache,
+		processedIDs))
 
-	if err := app.Listen(":80"); err != nil {
+	if err := app.Listen(":3000"); err != nil {
 		panic(err)
 	}
 }

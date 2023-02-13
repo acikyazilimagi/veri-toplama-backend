@@ -25,7 +25,7 @@ var cities = map[int][]float64{
 	10: {38.160827052916495, 39.33362355320935, 37.44250898099215, 37.35608449070936},
 }
 
-func GetLocationHandler(ctx context.Context, locationRepository locations.Repository, cache sources.Cache) fiber.Handler {
+func GetLocationHandler(ctx context.Context, locationRepository locations.Repository, cache sources.Cache, processedIDs []int) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locations, err := tools.GetAllLocations(ctx, cache)
 		if err != nil {
@@ -34,16 +34,9 @@ func GetLocationHandler(ctx context.Context, locationRepository locations.Reposi
 			return c.SendString(err.Error())
 		}
 
-		locs, err := locationRepository.GetLocations(ctx)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		for _, l := range locs {
+		for _, id := range processedIDs {
 			for i, loc := range locations {
-				if l.EntryID == loc.EntryID {
+				if id == loc.EntryID {
 					locations = append(locations[:i], locations[i+1:]...)
 
 					continue
