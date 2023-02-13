@@ -93,7 +93,7 @@ func main() {
 		userRepository,
 		cache))
 
-	if err := app.Listen(":3000"); err != nil {
+	if err := app.Listen(":80"); err != nil {
 		panic(err)
 	}
 }
