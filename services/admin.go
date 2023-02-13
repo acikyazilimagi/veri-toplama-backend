@@ -1,8 +1,9 @@
-package main
+package services
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/YusufOzmen01/veri-kontrol-backend/models"
 	"strconv"
 
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
@@ -57,7 +58,7 @@ func (a *admin) GetSingleEntry(c *fiber.Ctx) error {
 }
 
 func (a *admin) UpdateEntry(c *fiber.Ctx) error {
-	body := &ResolveBody{}
+	body := &models.ResolveBody{}
 
 	if err := json.Unmarshal(c.Body(), body); err != nil {
 		return c.SendString(err.Error())
