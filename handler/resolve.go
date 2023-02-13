@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/YusufOzmen01/veri-kontrol-backend/cache"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/YusufOzmen01/veri-kontrol-backend/models"
 	locationsRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
@@ -22,7 +23,7 @@ import (
 
 func ResolveHandler(c *fiber.Ctx) error {
 	ctx := context.Background()
-	cache := sources.NewCache(1<<30, 1e7, 64)
+	cache := cache.NewCache(1<<30, 1e7, 64)
 	rand.Seed(time.Now().UnixMilli())
 
 	mongoURL := os.Getenv("MONGO_URL")

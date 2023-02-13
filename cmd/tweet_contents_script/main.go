@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/Netflix/go-env"
+	"github.com/YusufOzmen01/veri-kontrol-backend/cache"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	locationsRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
@@ -23,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	cache := sources.NewCache(1<<30, 1e7, 64)
+	cache := cache.NewCache(1<<30, 1e7, 64)
 
 	mongoClient := sources.NewMongoClient(ctx, environment.MongoUri, "database")
 	locationRepository := locationsRepository.NewRepository(mongoClient)

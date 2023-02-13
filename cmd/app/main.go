@@ -5,7 +5,9 @@ import (
 	app2 "github.com/YusufOzmen01/veri-kontrol-backend/app"
 	"github.com/YusufOzmen01/veri-kontrol-backend/middleware"
 	"github.com/YusufOzmen01/veri-kontrol-backend/services"
+	"github.com/dgraph-io/ristretto"
 	"math/rand"
+	"net/http"
 	"os"
 	"time"
 
@@ -16,12 +18,22 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixMilli())
 	app := app2.NewApp()
 	middleware.Middlewares(app.App)
 	app.Register()
 
 	ctx := context.Background()
-	cache := sources.NewCache(1<<30, 1e7, 64)
+
+	cache, err := ristretto.NewCache(&ristretto.Config{
+		MaxCost:     1 << 30,
+		NumCounters: 1e7,
+		BufferItems: 64,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	rand.Seed(time.Now().UnixMilli())
 
 	mongoURL := os.Getenv("MONGO_URL")
@@ -29,14 +41,22 @@ func main() {
 		panic("mongo URL is empty")
 	}
 
+	// http client
+	client := &http.Client{
+		Timeout: 60 * time.Second,
+	}
+
 	mongoClient := sources.NewMongoClient(ctx, mongoURL, "database")
 	locationRepository := locationsRepository.NewRepository(mongoClient)
 	//userRepository := usersRepository.NewRepository(mongoClient)
+
+	// services
+	feeedServcie := services.NewFeedsServices(locationRepository, client, cache)
 	admin := services.NewAdmin(locationRepository, cache)
 
 	logrus.Infoln("Startup complete")
 
-	app.App.Get("/get-location", handler.GetFeeds)
+	app.App.Get("/get-location", handler.GetFeeds(feeedServcie))
 	app.App.Post("/resolve", handler.ResolveHandler)
 
 	adminG := app.App.Group("/admin", handler.AdminHandler)

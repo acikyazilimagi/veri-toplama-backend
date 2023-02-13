@@ -3,10 +3,10 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/YusufOzmen01/veri-kontrol-backend/cache"
 	"github.com/YusufOzmen01/veri-kontrol-backend/models"
 	"strconv"
 
-	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
@@ -21,10 +21,10 @@ type Admin interface {
 
 type admin struct {
 	locations locations.Repository
-	cache     sources.Cache
+	cache     cache.Cache
 }
 
-func NewAdmin(locations locations.Repository, cache sources.Cache) Admin {
+func NewAdmin(locations locations.Repository, cache cache.Cache) Admin {
 	return &admin{
 		locations: locations,
 		cache:     cache,

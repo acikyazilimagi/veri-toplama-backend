@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"github.com/Netflix/go-env"
+	"github.com/YusufOzmen01/veri-kontrol-backend/cache"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
 	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
@@ -34,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	locs, err := tools.GetAllLocations(context.Background(), sources.NewCache(1<<30, 1e7, 64))
+	locs, err := tools.GetAllLocations(context.Background(), cache.NewCache(1<<30, 1e7, 64))
 	if err != nil {
 		panic(err)
 	}

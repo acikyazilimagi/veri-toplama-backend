@@ -1,4 +1,4 @@
-package sources
+package cache
 
 import (
 	"time"
@@ -27,6 +27,7 @@ func NewCache(maxCost, numCounters, bufferItems int64) Cache {
 		NumCounters: numCounters,
 		BufferItems: bufferItems,
 	})
+
 	if err != nil {
 		panic(err)
 	}
