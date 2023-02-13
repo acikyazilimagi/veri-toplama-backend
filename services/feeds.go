@@ -46,7 +46,7 @@ func NewFeedsServices(repository repository, httpClient httpClient, cache cache)
 
 func (f *feedServices) GeetFeeds(c *fiber.Ctx) (*FeetFeedsResponse, error) {
 	logrus.Infoln("Pulling entries")
-	locs, err := f.getAllLocations()
+	locs, err := f.GetAllLocations(c)
 	if err != nil {
 		logrus.Errorf("Couldn't get all locations: %s", err)
 		return nil, fmt.Errorf("Couldn't get all locations: %s", err)
@@ -72,7 +72,7 @@ func (f *feedServices) GeetFeeds(c *fiber.Ctx) (*FeetFeedsResponse, error) {
 	return res, nil
 }
 
-func (f *feedServices) getAllLocations() ([]*locationsRepository.Location, error) {
+func (f *feedServices) GetAllLocations(c *fiber.Ctx) ([]*locationsRepository.Location, error) {
 	var d struct {
 		Locations []*locationsRepository.Location `json:"results"`
 	}

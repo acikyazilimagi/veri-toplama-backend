@@ -18,11 +18,9 @@ import (
 )
 
 // TODO: postresql eklenecek
-// TODO: resolve handler refactor edilecek
 // TODO: repository bakılacak
 // TODO: hatalı yerler var aynı kod fazla yazılmış onlar ayrılacak
 // TODO: admind tarafı eksik
-// TODO: resolve tarafı eksik
 func main() {
 	rand.Seed(time.Now().UnixMilli())
 	app := app2.NewApp()
@@ -63,7 +61,7 @@ func main() {
 	logrus.Infoln("Startup complete")
 
 	app.App.Get("/get-location", handler.GetFeeds(feeedServcie))
-	app.App.Post("/resolve", handler.ResolveHandler)
+	app.App.Post("/resolve", handler.Resolve(feeedServcie))
 
 	adminG := app.App.Group("/admin", handler.AdminHandler)
 	// TODO: soralım

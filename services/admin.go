@@ -3,14 +3,11 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/YusufOzmen01/veri-kontrol-backend/cache"
 	"github.com/YusufOzmen01/veri-kontrol-backend/models"
-	"strconv"
-
 	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
-	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"strconv"
 )
 
 type Admin interface {
@@ -20,14 +17,14 @@ type Admin interface {
 }
 
 type admin struct {
-	locations locations.Repository
-	cache     cache.Cache
+	locations   locations.Repository
+	feedService feedServices
 }
 
-func NewAdmin(locations locations.Repository, cache cache.Cache) Admin {
+func NewAdmin(locations locations.Repository, feedService feedServices) Admin {
 	return &admin{
-		locations: locations,
-		cache:     cache,
+		locations:   locations,
+		feedService: feedService,
 	}
 }
 
@@ -64,7 +61,7 @@ func (a *admin) UpdateEntry(c *fiber.Ctx) error {
 		return c.SendString(err.Error())
 	}
 
-	locs, err := tools.GetAllLocations(c.Context(), a.cache)
+	locs, err := a.feedService.GetAllLocations(c)
 	if err != nil {
 		logrus.Errorln(err)
 
