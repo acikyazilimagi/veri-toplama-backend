@@ -17,6 +17,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TODO: postresql eklenecek
+// TODO: resolve handler refactor edilecek
+// TODO: repository bakılacak
+// TODO: hatalı yerler var aynı kod fazla yazılmış onlar ayrılacak
+// TODO: admind tarafı eksik
+// TODO: resolve tarafı eksik
 func main() {
 	rand.Seed(time.Now().UnixMilli())
 	app := app2.NewApp()
