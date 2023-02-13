@@ -2,17 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/Netflix/go-env"
 	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
+	"github.com/YusufOzmen01/veri-kontrol-backend/handler"
 	locationsRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
 	usersRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/users"
-	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 )
@@ -87,197 +84,16 @@ func main() {
 
 	app.Get("/monitor", monitor.New())
 
-	app.Get("/get-location", func(c *fiber.Ctx) error {
-		locations, err := tools.GetAllLocations(ctx, cache)
-		if err != nil {
-			logrus.Errorln(err)
+	app.Get("/get-location", handler.GetLocationHandler(ctx,
+		locationRepository,
+		cache))
 
-			return c.SendString(err.Error())
-		}
+	app.Post("/resolve", handler.ResolveValidationHandler(ctx,
+		locationRepository,
+		userRepository,
+		cache))
 
-		locs, err := locationRepository.GetLocations(ctx)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		for _, l := range locs {
-			for i, loc := range locations {
-				if l.EntryID == loc.EntryID {
-					locations = append(locations[:i], locations[i+1:]...)
-
-					continue
-				}
-			}
-		}
-
-		cityID := c.QueryInt("city_id")
-		if cityID > 0 {
-			box := cities[cityID]
-
-			filteredLocations := make([]*locationsRepository.Location, 0)
-
-			for _, loc := range locations {
-				if box[0] >= loc.Loc[0] && box[1] >= loc.Loc[1] && box[2] <= loc.Loc[0] && box[3] <= loc.Loc[1] {
-					filteredLocations = append(filteredLocations, loc)
-				}
-			}
-
-			locations = filteredLocations
-		}
-
-		startingAt := c.QueryInt("starting_at")
-		if startingAt > 0 {
-			filteredLocations := make([]*locationsRepository.Location, 0)
-
-			for _, loc := range locations {
-				if loc.Epoch >= startingAt {
-					filteredLocations = append(filteredLocations, loc)
-				}
-			}
-
-			locations = filteredLocations
-		}
-
-		if len(locations) == 0 {
-			return c.JSON(struct {
-				Count    int                           `json:"count"`
-				Location *locationsRepository.Location `json:"location"`
-			}{
-				Count:    0,
-				Location: nil,
-			})
-		}
-
-		var selected *locationsRepository.Location
-		fullText := ""
-		processed := make([]int, 0)
-
-		for {
-			randIndex := rand.Intn(len(locations))
-
-			if len(processed) == len(locations) {
-				return c.JSON(struct {
-					Count    int                           `json:"count"`
-					Location *locationsRepository.Location `json:"location"`
-				}{
-					Count:    0,
-					Location: nil,
-				})
-			}
-
-			for _, i := range processed {
-				if randIndex == i {
-					continue
-				}
-			}
-
-			processed = append(processed, randIndex)
-
-			s := locations[randIndex]
-
-			singleData, err := tools.GetSingleLocation(ctx, s.EntryID, cache)
-			if err != nil {
-				logrus.Errorln(err)
-
-				return c.SendString(err.Error())
-			}
-
-			exists, err := locationRepository.IsDuplicate(c.Context(), singleData.FullText)
-			if err != nil {
-				logrus.Errorln(err)
-
-				return c.SendString(err.Error())
-			}
-
-			if !exists {
-				selected = s
-				fullText = singleData.FullText
-
-				break
-			}
-		}
-
-		selected.OriginalMessage = fullText
-		selected.OriginalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", selected.Loc[0], selected.Loc[1], selected.Loc[0], selected.Loc[1])
-
-		return c.JSON(struct {
-			Count    int                           `json:"count"`
-			Location *locationsRepository.Location `json:"location"`
-		}{
-			Count:    len(locations),
-			Location: selected,
-		})
-	})
-
-	app.Post("/resolve", func(c *fiber.Ctx) error {
-		body := &ResolveBody{}
-
-		if err := json.Unmarshal(c.Body(), body); err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		exists, err := locationRepository.IsResolved(ctx, body.ID)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		if exists {
-			return c.SendString("this location is already checked")
-		}
-
-		locations, err := tools.GetAllLocations(ctx, cache)
-		if err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		originalLocation := ""
-		location := make([]float64, 0)
-
-		for _, loc := range locations {
-			if loc.EntryID == body.ID {
-				originalLocation = fmt.Sprintf("https://www.google.com/maps/?q=%f,%f&ll=%f,%f&z=21", loc.Loc[0], loc.Loc[1], loc.Loc[0], loc.Loc[1])
-				location = loc.Loc
-			}
-		}
-
-		var sender *usersRepository.User
-
-		authKey := c.Get("Auth-Key")
-		userData, err := userRepository.GetUser(c.Context(), authKey)
-		if err == nil {
-			sender = userData
-		}
-
-		if err := locationRepository.ResolveLocation(ctx, &locationsRepository.LocationDB{
-			EntryID:          body.ID,
-			Type:             body.LocationType,
-			Location:         location,
-			Corrected:        body.Reason == "Hata Yok",
-			OriginalAddress:  originalLocation,
-			CorrectedAddress: body.NewAddress,
-			Reason:           body.Reason,
-			Sender:           sender,
-			OpenAddress:      body.OpenAddress,
-			Apartment:        body.Apartment,
-			TweetContents:    body.TweetContents,
-		}); err != nil {
-			logrus.Errorln(err)
-
-			return c.SendString(err.Error())
-		}
-
-		return c.SendString("Successfully added!")
-	})
-
-	if err := app.Listen(":80"); err != nil {
+	if err := app.Listen(":3000"); err != nil {
 		panic(err)
 	}
 }
