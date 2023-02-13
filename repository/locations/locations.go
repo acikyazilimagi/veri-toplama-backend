@@ -15,6 +15,8 @@ type Repository interface {
 	IsResolved(ctx context.Context, locationID int) (bool, error)
 	IsDuplicate(ctx context.Context, tweetContents string) (bool, error)
 	GetDocumentsWithNoTweetContents(ctx context.Context) ([]*LocationDB, error)
+
+	GetNewFormatDocuments(ctx context.Context) ([]*LocationDB, error)
 }
 
 type repository struct {
@@ -72,7 +74,7 @@ func (r *repository) GetLocations(ctx context.Context) ([]*LocationDB, error) {
 }
 
 func (r *repository) ResolveLocation(ctx context.Context, location *LocationDB) error {
-	if err := r.mongo.DeleteOne(ctx, "locations", bson.D{{
+	if err := r.mongo.DeleteOne(ctx, "locations_test", bson.D{{
 		Key:   "entry_id",
 		Value: location.EntryID,
 	}}); err != nil {
@@ -132,4 +134,26 @@ func (r *repository) GetDocumentsWithNoTweetContents(ctx context.Context) ([]*Lo
 	}
 
 	return locs, nil
+}
+
+func (r *repository) GetNewFormatDocuments(ctx context.Context) ([]*LocationDB, error) {
+	cur, err := r.mongo.Find(ctx, "locations_test", bson.D{{
+		Key: "reason",
+		Value: bson.D{{
+			Key:   "$in",
+			Value: []string{"Hata Yok", "İşaretleme Hatası", "Duplicate", "Adres Yok", "Kaynak Yok", "Yardım Talebi", "Kurtarıldı", "Hatalı ya da Spam"},
+		}},
+	}})
+	if err != nil {
+		return nil, err
+	}
+
+	locs := make([]*LocationDB, 0)
+	if err := cur.All(ctx, &locs); err != nil {
+		logrus.Errorln(err)
+		return nil, err
+	}
+
+	return locs, nil
+
 }
