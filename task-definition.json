@@ -32,7 +32,12 @@
         "dnsServers": null,
         "mountPoints": [],
         "workingDirectory": null,
-        "secrets": null,
+        "secrets": null[
+          {
+            "valueFrom": "arn:aws:secretsmanager:eu-central-1:366354050833:secret:/projects/veritoplama/mongo/uri-6nIxKk::",
+            "name": "mongo_uri"
+          },          
+        ],
         "dockerSecurityOptions": null,
         "memory": 4096,
         "memoryReservation": null,
