@@ -2,32 +2,29 @@ package main
 
 import (
 	"context"
-	app2 "github.com/YusufOzmen01/veri-kontrol-backend/app"
-	"github.com/YusufOzmen01/veri-kontrol-backend/middleware"
-	"github.com/YusufOzmen01/veri-kontrol-backend/services"
+	app2 "github.com/acikkaynak/veri-toplama-backend/app"
+	"github.com/acikkaynak/veri-toplama-backend/db/sources"
+	usersRepository "github.com/acikkaynak/veri-toplama-backend/repository/users"
+	"github.com/acikkaynak/veri-toplama-backend/services"
 	"github.com/dgraph-io/ristretto"
 	"math/rand"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	"github.com/YusufOzmen01/veri-kontrol-backend/handler"
-	locationsRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
-	"github.com/sirupsen/logrus"
+	"github.com/acikkaynak/veri-toplama-backend/handler"
+	locationsRepository "github.com/acikkaynak/veri-toplama-backend/repository/locations"
 )
 
 // TODO: postresql eklenecek
-// TODO: repository bakılacak
-// TODO: hatalı yerler var aynı kod fazla yazılmış onlar ayrılacak
-// TODO: admind tarafı eksik
 func main() {
+	// neden ihtiyacımız var?
 	rand.Seed(time.Now().UnixMilli())
-	app := app2.NewApp()
-	middleware.Middlewares(app.App)
-	app.Register()
 
-	ctx := context.Background()
+	app := app2.NewApp()
+
+	app.SetMiddlewares()
+	app.Register()
 
 	cache, err := ristretto.NewCache(&ristretto.Config{
 		MaxCost:     1 << 30,
@@ -38,37 +35,33 @@ func main() {
 		panic(err)
 	}
 
-	rand.Seed(time.Now().UnixMilli())
-
 	mongoURL := os.Getenv("MONGO_URL")
 	if mongoURL == "" {
 		panic("mongo URL is empty")
 	}
 
-	// http client
 	client := &http.Client{
 		Timeout: 60 * time.Second,
 	}
 
-	mongoClient := sources.NewMongoClient(ctx, mongoURL, "database")
+	mongoClient := sources.NewMongoClient(context.TODO(), mongoURL, "database")
+
 	locationRepository := locationsRepository.NewRepository(mongoClient)
-	//userRepository := usersRepository.NewRepository(mongoClient)
+	userRepository := usersRepository.NewRepository(mongoClient)
 
-	// services
-	feeedServcie := services.NewFeedsServices(locationRepository, client, cache)
-	admin := services.NewAdmin(locationRepository, cache)
+	locationService := services.NewLocationService(client, cache)
+	feedService := services.NewFeedsServices(locationRepository, locationService)
+	resolveService := services.NewResolveService(locationService, userRepository, locationRepository)
+	admin := services.NewAdmin(locationRepository, locationService)
 
-	logrus.Infoln("Startup complete")
-
-	app.App.Get("/get-location", handler.GetFeeds(feeedServcie))
-	app.App.Post("/resolve", handler.Resolve(feeedServcie))
+	app.App.Get("/get-location", handler.GetFeeds(feedService))
+	app.App.Post("/resolve", handler.Resolve(resolveService))
 
 	adminG := app.App.Group("/admin", handler.AdminHandler)
-	// TODO: soralım
 	entriesG := adminG.Group("/entries")
 	entriesG.Get("", admin.GetLocationEntries)
 	entriesG.Get("/:entry_id", admin.GetSingleEntry)
 	entriesG.Post("/:entry_id", admin.UpdateEntry)
 
-	app.Run()
+	app.Run(":80")
 }

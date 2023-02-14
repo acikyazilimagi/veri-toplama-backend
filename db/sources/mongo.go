@@ -10,32 +10,30 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type (
-	MongoClient interface {
-		Aggregate(ctx context.Context, table string, pipeline interface{}, opts ...*options.AggregateOptions) (*mongo.Cursor, error)
-		UpsertOne(ctx context.Context, table string, filter interface{}, update interface{}) error
-		UpsertMany(ctx context.Context, table string, filter interface{}, update interface{}) error
-		InsertOne(ctx context.Context, table string, document interface{}, opts ...*options.InsertOneOptions) error
-		InsertMany(ctx context.Context, table string, documents []interface{}, opts ...*options.InsertManyOptions) error
-		Find(ctx context.Context, table string, filter interface{}, opts ...*options.FindOptions) (cur *mongo.Cursor, err error)
-		FindOne(ctx context.Context, table string, filter interface{}, opts ...*options.FindOneOptions) *mongo.SingleResult
-		DeleteOne(ctx context.Context, table string, filter interface{}, opts ...*options.DeleteOptions) error
-		DeleteMany(ctx context.Context, table string, filter interface{}, opts ...*options.DeleteOptions) error
-		UpdateOne(ctx context.Context, table string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error
-		DoesExist(ctx context.Context, table string, filter bson.D, opts ...*options.FindOneOptions) (bool, error)
-		CreateIndex(ctx context.Context, table string, keys ...bson.E) (string, error)
-		Count(ctx context.Context, table string, filter interface{}, opts ...*options.CountOptions) (int64, error)
-		Disconnect(ctx context.Context) error
-		WithSession() (MongoClient, error)
-		WithTransaction(ctx context.Context, callback func(sessCtx mongo.SessionContext) (interface{}, error)) (interface{}, error)
-	}
+type MongoClient interface {
+	Aggregate(ctx context.Context, table string, pipeline interface{}, opts ...*options.AggregateOptions) (*mongo.Cursor, error)
+	UpsertOne(ctx context.Context, table string, filter interface{}, update interface{}) error
+	UpsertMany(ctx context.Context, table string, filter interface{}, update interface{}) error
+	InsertOne(ctx context.Context, table string, document interface{}, opts ...*options.InsertOneOptions) error
+	InsertMany(ctx context.Context, table string, documents []interface{}, opts ...*options.InsertManyOptions) error
+	Find(ctx context.Context, table string, filter interface{}, opts ...*options.FindOptions) (cur *mongo.Cursor, err error)
+	FindOne(ctx context.Context, table string, filter interface{}, opts ...*options.FindOneOptions) *mongo.SingleResult
+	DeleteOne(ctx context.Context, table string, filter interface{}, opts ...*options.DeleteOptions) error
+	DeleteMany(ctx context.Context, table string, filter interface{}, opts ...*options.DeleteOptions) error
+	UpdateOne(ctx context.Context, table string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error
+	DoesExist(ctx context.Context, table string, filter bson.D, opts ...*options.FindOneOptions) (bool, error)
+	CreateIndex(ctx context.Context, table string, keys ...bson.E) (string, error)
+	Count(ctx context.Context, table string, filter interface{}, opts ...*options.CountOptions) (int64, error)
+	Disconnect(ctx context.Context) error
+	WithSession() (MongoClient, error)
+	WithTransaction(ctx context.Context, callback func(sessCtx mongo.SessionContext) (interface{}, error)) (interface{}, error)
+}
 
-	mongoClient struct {
-		cl      *mongo.Client
-		db      *mongo.Database
-		session mongo.Session
-	}
-)
+type mongoClient struct {
+	cl      *mongo.Client
+	db      *mongo.Database
+	session mongo.Session
+}
 
 func NewMongoClient(ctx context.Context, uri, dbName string) MongoClient {
 	opts := options.Client()

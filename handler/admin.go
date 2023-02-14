@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	usersRepository "github.com/YusufOzmen01/veri-kontrol-backend/repository/users"
+	"github.com/acikkaynak/veri-toplama-backend/db/sources"
+	usersRepository "github.com/acikkaynak/veri-toplama-backend/repository/users"
 	"github.com/gofiber/fiber/v2"
 	"os"
 )

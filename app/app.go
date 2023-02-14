@@ -2,9 +2,13 @@ package app
 
 import (
 	"fmt"
-	"github.com/YusufOzmen01/veri-kontrol-backend/handler"
+	"github.com/acikkaynak/veri-toplama-backend/handler"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,7 +35,7 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) Run() {
+func (a *App) Run(addr string) {
 	c := make(chan os.Signal, 1)
 
 	signal.Notify(c, syscall.SIGINT)
@@ -43,7 +47,7 @@ func (a *App) Run() {
 		a.App.Shutdown()
 	}()
 
-	if err := a.App.Listen(":80"); err != nil {
+	if err := a.App.Listen(addr); err != nil {
 		panic(fmt.Sprintf("app error: %s", err.Error()))
 	}
 }
@@ -52,4 +56,13 @@ func (a *App) Register() {
 	a.App.Get("/healthcheck", handler.Healtcheck)
 	a.App.Get("/monitor", monitor.New())
 	// TODO: add to swagger
+}
+
+func (a *App) SetMiddlewares() {
+	a.App.Use(
+		cors.New(),
+		logger.New(),
+		recover.New(),
+		pprof.New(),
+	)
 }

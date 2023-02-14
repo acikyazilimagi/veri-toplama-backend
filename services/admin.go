@@ -1,14 +1,27 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/YusufOzmen01/veri-kontrol-backend/models"
-	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
+	"github.com/acikkaynak/veri-toplama-backend/models"
+	"github.com/acikkaynak/veri-toplama-backend/repository/locations"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )
+
+type adminLocationRepository interface {
+	GetLocations(ctx context.Context) ([]*locations.LocationDB, error)
+	ResolveLocation(ctx context.Context, location *locations.LocationDB) error
+	IsResolved(ctx context.Context, locationID int) (bool, error)
+	IsDuplicate(ctx context.Context, tweetContents string) (bool, error)
+	GetDocumentsWithNoTweetContents(ctx context.Context) ([]*locations.LocationDB, error)
+}
+
+type adminFeedService interface {
+	GeetFeeds(c *fiber.Ctx) (*FeetFeedsResponse, error)
+}
 
 type Admin interface {
 	GetLocationEntries(c *fiber.Ctx) error
@@ -17,14 +30,14 @@ type Admin interface {
 }
 
 type admin struct {
-	locations   locations.Repository
-	feedService feedServices
+	locations             adminLocationRepository
+	locationServiceClient locationServiceClient
 }
 
-func NewAdmin(locations locations.Repository, feedService feedServices) Admin {
+func NewAdmin(locations adminLocationRepository, locationServiceClient locationServiceClient) Admin {
 	return &admin{
-		locations:   locations,
-		feedService: feedService,
+		locations:             locations,
+		locationServiceClient: locationServiceClient,
 	}
 }
 
@@ -61,10 +74,9 @@ func (a *admin) UpdateEntry(c *fiber.Ctx) error {
 		return c.SendString(err.Error())
 	}
 
-	locs, err := a.feedService.GetAllLocations(c)
+	locs, err := a.locationServiceClient.GetLocations(c)
 	if err != nil {
 		logrus.Errorln(err)
-
 		return c.SendString(err.Error())
 	}
 
@@ -91,7 +103,6 @@ func (a *admin) UpdateEntry(c *fiber.Ctx) error {
 		Apartment:        body.Apartment,
 	}); err != nil {
 		logrus.Errorln(err)
-
 		return c.SendString(err.Error())
 	}
 

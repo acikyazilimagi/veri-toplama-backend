@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/YusufOzmen01/veri-kontrol-backend/services"
+	"github.com/acikkaynak/veri-toplama-backend/services"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
 )
