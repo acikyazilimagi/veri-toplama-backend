@@ -6,14 +6,13 @@ COPY . .
 
 RUN go mod download
 
-WORKDIR /app/cmd/app
+RUN go build -ldflags="-s -w" -tags=musl -o /app/api ./cmd/app
 
-RUN go build -ldflags="-s -w" -tags=musl -o /build/app
 
-FROM alpine AS production
+FROM gcr.io/distroless/static-debian11 as runner
 
-COPY --from=builder /build/app /app
+COPY --from=builder --chown=nonroot:nonroot /app/api /
 
 EXPOSE 80
 
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/api"]
