@@ -9,7 +9,7 @@
         "logDriver": "awslogs",
         "secretOptions": null,
         "options": {
-          "awslogs-group": "/ecs/veritoplama_api",
+          "awslogs-group": "/ecs/veritoplama-api",
           "awslogs-region": "eu-central-1",
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -43,7 +43,7 @@
       "memoryReservation": null,
       "volumesFrom": [],
       "stopTimeout": null,
-      "image": "veritoplama_api",
+      "image": "nginx:latest",
       "startTimeout": null,
       "firelensConfiguration": null,
       "dependsOn": null,
@@ -66,7 +66,7 @@
   "placementConstraints": [],
   "memory": "1024",
   "taskRoleArn": null,
-  "family": "veritoplama_api",
+  "family": "veritoplama-api",
   "pidMode": null,
   "requiresCompatibilities": [
     "FARGATE"
