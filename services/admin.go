@@ -1,16 +1,27 @@
-package main
+package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
-
-	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	"github.com/YusufOzmen01/veri-kontrol-backend/repository/locations"
-	"github.com/YusufOzmen01/veri-kontrol-backend/tools"
+	"github.com/acikkaynak/veri-toplama-backend/models"
+	"github.com/acikkaynak/veri-toplama-backend/repository/locations"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"strconv"
 )
+
+type adminLocationRepository interface {
+	GetLocations(ctx context.Context) ([]*locations.LocationDB, error)
+	ResolveLocation(ctx context.Context, location *locations.LocationDB) error
+	IsResolved(ctx context.Context, locationID int) (bool, error)
+	IsDuplicate(ctx context.Context, tweetContents string) (bool, error)
+	GetDocumentsWithNoTweetContents(ctx context.Context) ([]*locations.LocationDB, error)
+}
+
+type adminFeedService interface {
+	GeetFeeds(c *fiber.Ctx) (*FeetFeedsResponse, error)
+}
 
 type Admin interface {
 	GetLocationEntries(c *fiber.Ctx) error
@@ -19,14 +30,14 @@ type Admin interface {
 }
 
 type admin struct {
-	locations locations.Repository
-	cache     sources.Cache
+	locations             adminLocationRepository
+	locationServiceClient locationServiceClient
 }
 
-func NewAdmin(locations locations.Repository, cache sources.Cache) Admin {
+func NewAdmin(locations adminLocationRepository, locationServiceClient locationServiceClient) Admin {
 	return &admin{
-		locations: locations,
-		cache:     cache,
+		locations:             locations,
+		locationServiceClient: locationServiceClient,
 	}
 }
 
@@ -57,16 +68,15 @@ func (a *admin) GetSingleEntry(c *fiber.Ctx) error {
 }
 
 func (a *admin) UpdateEntry(c *fiber.Ctx) error {
-	body := &ResolveBody{}
+	body := &models.ResolveBody{}
 
 	if err := json.Unmarshal(c.Body(), body); err != nil {
 		return c.SendString(err.Error())
 	}
 
-	locs, err := tools.GetAllLocations(c.Context(), a.cache)
+	locs, err := a.locationServiceClient.GetLocations(c)
 	if err != nil {
 		logrus.Errorln(err)
-
 		return c.SendString(err.Error())
 	}
 
@@ -93,7 +103,6 @@ func (a *admin) UpdateEntry(c *fiber.Ctx) error {
 		Apartment:        body.Apartment,
 	}); err != nil {
 		logrus.Errorln(err)
-
 		return c.SendString(err.Error())
 	}
 

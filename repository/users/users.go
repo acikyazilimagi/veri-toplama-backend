@@ -3,39 +3,25 @@ package users
 import (
 	"context"
 	"fmt"
-	"github.com/YusufOzmen01/veri-kontrol-backend/core/sources"
-	"github.com/YusufOzmen01/veri-kontrol-backend/util"
+	"github.com/acikkaynak/veri-toplama-backend/db/sources"
+	"github.com/acikkaynak/veri-toplama-backend/util"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
-type Repository interface {
-	GetUser(ctx context.Context, authKey string) (*User, error)
-	AddUser(ctx context.Context, name, discord string, permLevel int) (string, error)
-}
-
-type repository struct {
-	mongo sources.MongoClient
-}
-
-func NewRepository(mongo sources.MongoClient) Repository {
-	return &repository{
-		mongo: mongo,
-	}
-}
 
 const (
 	PermSubmit    = 1
 	PermModerator = 2
 )
 
-type User struct {
-	ID          primitive.ObjectID `json:"_id" bson:"_id"`
-	Name        string             `json:"name" bson:"name"`
-	Discord     string             `json:"discord" bson:"discord"`
-	AuthKeyHash uint32             `json:"auth_key_hash" bson:"auth_key_hash"`
-	PermLevel   int                `json:"perm_level" bson:"perm_level"`
+type repository struct {
+	mongo sources.MongoClient
+}
+
+func NewRepository(mongo sources.MongoClient) *repository {
+	return &repository{
+		mongo: mongo,
+	}
 }
 
 func (r *repository) GetUser(ctx context.Context, authKey string) (*User, error) {
