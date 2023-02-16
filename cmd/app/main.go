@@ -85,7 +85,9 @@ func main() {
 	}
 
 	logrus.Infoln("Startup complete")
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "https://veri-toplama.afetharita.com",
+	}))
 	app.Get("/healthcheck", handler.Healtcheck)
 
 	adminG := app.Group("/admin", func(c *fiber.Ctx) error {
