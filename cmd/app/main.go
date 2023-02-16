@@ -239,7 +239,7 @@ func main() {
 			return c.SendString(err.Error())
 		}
 
-		match, err := regexp.MatchString("^https://goo.gl/maps/.*", body.NewAddress)
+		match, err := regexp.MatchString("^https://www.google.com/maps/.*", body.NewAddress)
 		if err != nil {
 			logrus.Error(err)
 			return err
