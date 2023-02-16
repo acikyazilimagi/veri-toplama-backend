@@ -86,7 +86,7 @@ func main() {
 
 	logrus.Infoln("Startup complete")
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "https://veri-toplama.afetharita.com",
+		AllowOrigins: "*",
 	}))
 	app.Get("/healthcheck", handler.Healtcheck)
 
