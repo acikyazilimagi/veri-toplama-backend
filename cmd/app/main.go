@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"regexp"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -278,33 +279,31 @@ func main() {
 		if err == nil {
 			sender = userData
 		}
-		input := []string{"HATA YOK", "Hata Yok", "hata yok"}
 
-		if body.Reason != input[0] && body.Reason != input[1] && body.Reason != input[2] {
-			if body.NewAddress != "" {
-
-				longUrl, err := util.GatherLongUrlFromShortUrl(body.NewAddress)
-				if err != nil {
-					logrus.Errorln(err)
-					return c.SendString(err.Error())
-				}
-				locUrl := util.URLtoLatLng(longUrl)
+		if strings.ToLower(body.Reason) != "hata yok" && len(body.NewAddress) > 0 {
+			longUrl, err := util.GatherLongUrlFromShortUrl(body.NewAddress)
+			if err != nil {
+				logrus.Errorln(err)
+				return c.SendString(err.Error())
+			}
+			locUrl := util.URLtoLatLng(longUrl)
+			if locUrl != nil {
 				latVal, err := strconv.ParseFloat(locUrl["lat"], 64)
 				if err != nil {
 					logrus.Error(err)
+
 					c.SendString(err.Error())
 
 				}
 				lngVal, err := strconv.ParseFloat(locUrl["lng"], 64)
 				if err != nil {
 					logrus.Error(err)
+					
 					c.SendString(err.Error())
 				}
 				location[0] = latVal
 				location[1] = lngVal
-
 			}
-
 		}
 
 		if err := locationRepository.ResolveLocation(ctx, &locationsRepository.LocationDB{
