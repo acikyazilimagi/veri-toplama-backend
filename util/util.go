@@ -27,12 +27,20 @@ func RandomString(n int) string {
 
 func URLtoLatLng(url string) map[string]string {
 	re := regexp.MustCompile(`!3d(-?\d+.\d+)`)
-	lat := re.FindStringSubmatch(url)[1]
+	lat := re.FindStringSubmatch(url)
+	if len(lat) != 2 {
+		return nil
+	}
+
 	re = regexp.MustCompile(`!4d(-?\d+.\d+)`)
-	lng := re.FindStringSubmatch(url)[1]
+	lng := re.FindStringSubmatch(url)
+	if len(lng) != 2 {
+		return nil
+	}
+
 	return map[string]string{
-		"lat": lat,
-		"lng": lng,
+		"lat": lat[1],
+		"lng": lng[1],
 	}
 }
 
