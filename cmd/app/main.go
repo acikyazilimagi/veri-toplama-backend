@@ -287,23 +287,25 @@ func main() {
 				return c.SendString(err.Error())
 			}
 			locUrl := util.URLtoLatLng(longUrl)
-			if locUrl != nil {
-				latVal, err := strconv.ParseFloat(locUrl["lat"], 64)
-				if err != nil {
-					logrus.Error(err)
-
-					c.SendString(err.Error())
-
-				}
-				lngVal, err := strconv.ParseFloat(locUrl["lng"], 64)
-				if err != nil {
-					logrus.Error(err)
-					
-					c.SendString(err.Error())
-				}
-				location[0] = latVal
-				location[1] = lngVal
+			if locUrl == nil {
+				return c.SendString("Not a valid url")
 			}
+
+			latVal, err := strconv.ParseFloat(locUrl["lat"], 64)
+			if err != nil {
+				logrus.Error(err)
+
+				c.SendString(err.Error())
+
+			}
+			lngVal, err := strconv.ParseFloat(locUrl["lng"], 64)
+			if err != nil {
+				logrus.Error(err)
+
+				c.SendString(err.Error())
+			}
+			location[0] = latVal
+			location[1] = lngVal
 		}
 
 		if err := locationRepository.ResolveLocation(ctx, &locationsRepository.LocationDB{
