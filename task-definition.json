@@ -25,7 +25,7 @@
       ],
       "command": null,
       "linuxParameters": null,
-      "cpu": 512,
+      "cpu": 1024,
       "environment": [],
       "resourceRequirements": null,
       "ulimits": null,
@@ -39,7 +39,7 @@
         }
       ],
       "dockerSecurityOptions": null,
-      "memory": 1024,
+      "memory": 2048,
       "memoryReservation": null,
       "volumesFrom": [],
       "stopTimeout": null,
@@ -64,7 +64,7 @@
     }
   ],
   "placementConstraints": [],
-  "memory": "1024",
+  "memory": "2048",
   "taskRoleArn": null,
   "family": "veritoplama-api",
   "pidMode": null,
@@ -73,7 +73,7 @@
   ],
   "networkMode": "awsvpc",
   "runtimePlatform": null,
-  "cpu": "512",
+  "cpu": "1024",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
   "volumes": []
